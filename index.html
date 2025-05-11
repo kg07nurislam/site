@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://www.gstatic.com/firebasejs/6.0.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/6.0.2/firebase-auth.js"></script>
+  <title>Phone Auth</title>
+  <style>
+    .container {
+      width: 302px;
+      height: 175px;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      margin: auto;
+    }
+
+    #number,
+    #verificationcode {
+      width: calc(100% - 24px);
+      padding: 10px;
+      font-size: 20px;
+      margin-bottom: 5px;
+      outline: none;
+    }
+
+    #recaptcha-container {
+      margin-bottom: 5px;
+    }
+
+    #send,
+    #verify {
+      width: 100%;
+      height: 40px;
+      outline: none;
+    }
+
+    .p-conf,
+    .n-conf {
+      width: calc(100% - 22px);
+      border: 2px solid green;
+      border-radius: 4px;
+      padding: 8px 10px;
+      margin: 4px 0px;
+      background-color: rgba(0, 249, 12, 0.5);
+      display: none;
+    }
+
+    .n-conf {
+      border-color: red;
+      background-color: rgba(255, 0, 4, 0.5);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="sender">
+      <input type="text" id="number" value="+996" />
+      <div id="recaptcha-container"></div>
+      <input type="button" id="send" value="Send" />
+    </div>
+
+    <div id="verifier" style="display: none;">
+      <input type="text" id="verificationcode" placeholder="000 000">
+      <input type="button" id="verify" value="Verify">
+      <div class="p-conf">Number verified</div>
+      <div class="n-conf">Invalid code</div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJBRPRQ3rT43xKy-A_xnrDKDngvw4_uuU",
+      authDomain: "kg07nurislam-db.firebaseapp.com",
+      projectId: "kg07nurislam-db",
+      storageBucket: "kg07nurislam-db.appspot.com",
+      messagingSenderId: "1003842284352",
+      appId: "1:1003842284352:web:11dc2b7571bb0f6ebf28a5",
+      measurementId: "G-MV955FQ6Q2"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    let recaptchaVerifier;
+
+    window.onload = function () {
+      recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+        'size': 'normal', // же 'invisible'
+        'callback': function (response) {
+          console.log("reCAPTCHA Success", response);
+        },
+        'expired-callback': function () {
+          alert('reCAPTCHA expired. Try again.');
+        }
+      });
+
+      recaptchaVerifier.render().then(function (widgetId) {
+        window.recaptchaWidgetId = widgetId;
+      });
+    };
+
+    document.getElementById("send").onclick = function () {
+      const number = document.getElementById("number").value;
+
+      firebase.auth().signInWithPhoneNumber(number, recaptchaVerifier)
+        .then(function (confirmationResult) {
+          window.confirmationResult = confirmationResult;
+          document.getElementById("verifier").style.display = "block";
+        }).catch(function (error) {
+          alert("Error: " + error.message);
+        });
+    };
+
+    document.getElementById("verify").onclick = function () {
+      const code = document.getElementById("verificationcode").value;
+      window.confirmationResult.confirm(code).then(function (result) {
+        document.querySelector(".p-conf").style.display = "block";
+        document.querySelector(".n-conf").style.display = "none";
+      }).catch(function (error) {
+        document.querySelector(".p-conf").style.display = "none";
+        document.querySelector(".n-conf").style.display = "block";
+      });
+    };
+  </script>
+</body>
+
+  </html>
